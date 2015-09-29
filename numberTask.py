@@ -4,7 +4,17 @@ import vizact
 import numpy as np
 wii = viz.add('wiimote.dle')#Add wiimote extension
 
+sendNetCommands = True
 
+receiver  = False
+
+if( sendNetCommands ):
+	receiver = viz.addNetwork('performLabVR2'.upper())
+	receiver.port(5000) # Send data over port 5000
+
+# dummy
+def appendTrialToEndOfBlock():
+	return
 
 class wiiObj():
 	def __init__(self):
@@ -93,7 +103,10 @@ class numberCount(viz.EventClass):
 		Freq = 500 # Set Frequency To 2500 Hertz
 		Dur = 100 # Set Duration To 1000 ms == 1 second
 		winsound.Beep(Freq,Dur)
-	
+		
+		if(sendNetCommands):
+			receiver.send(action = appendTrialToEndOfBlock) # Passed through the e object as e.message
+		
 	def startTargetTimer(self):
 		self.targetTimer = vizact.ontimer2(self.updateRateSecs+0.2,0,self.mistakeMade)
 	
@@ -127,3 +140,31 @@ import vizact
 
 wii1 = wiiObj()
 vizact.onsensordown(wii1.wiimote,wii.BUTTON_B,counter.targetDetected)		
+
+###############################################################################################################################################################################
+###############################################################################################################################################################################
+###############################################################################################################################################################################
+
+####################################
+## Setup receiver
+#
+#def onNetwork(e):
+#	
+#	print 'Got it.'
+#	sender = 'performVR'.upper()
+#	
+#	print sender
+#	if e.sender.upper() == sender:
+#		e.action(e)
+#		
+#
+#def printMessage(e):
+#	print 'Message is: ' + e.message
+#
+## Receive data over port 5000
+#viz.net.addPort(5000)
+#	
+#viz.callback(viz.NETWORK_EVENT, onNetwork)
+#
+
+
