@@ -4,17 +4,20 @@ import vizact
 import numpy as np
 wii = viz.add('wiimote.dle')#Add wiimote extension
 
-sendNetCommands = True
 
-receiver  = False
+class soundBank():
+	def __init__(self):
+		 
+		################################################################
+		################################################################
+		
+		## Register sounds.  It makes sense to do it once per experiment.
+		
+		self.buzzer =  '/Resources/BUZZER.wav'
+		
+		viz.playSound(self.buzzer,viz.SOUND_PRELOAD)
 
-if( sendNetCommands ):
-	receiver = viz.addNetwork('performLabVR2'.upper())
-	receiver.port(5000) # Send data over port 5000
-
-# dummy
-def appendTrialToEndOfBlock():
-	return
+soundBank = soundBank()
 
 class wiiObj():
 	def __init__(self):
@@ -28,8 +31,8 @@ class numberCount(viz.EventClass):
 	def __init__(self):
 			
 
-		self.targetNumber = 0
-		self.maxNum = 3
+		self.targetNumber = 3
+		self.maxNum = 5
 		
 		self.buffSize  = 10
 		self.updateRateSecs = 1
@@ -47,7 +50,7 @@ class numberCount(viz.EventClass):
 		self.textObj.fontSize(1000)
 		
 		self.updateAction  = vizact.ontimer(self.updateRateSecs,self.presentNumber)
-		self.updateAction.setEnabled(viz.disable)
+		self.startPresentingNumbers()
 		
 		self.targetTimer = []
 		
@@ -85,35 +88,44 @@ class numberCount(viz.EventClass):
 		
 		if ( self.textObj.getMessage() == str(self.targetNumber) ):
 			self.startTargetTimer()
-		
-	def startCountDown(self):
+
+	def startPresentingNumbers(self):
 		
 		if(self.updateAction):
 			self.updateAction.setEnabled(viz.enable)
 			
-	def stopCountDown(self):
+	def stopPresentingNumbers(self):
 		
 		if(self.updateAction):
 			self.updateAction.setEnabled(viz.disable)
+			self.stopTargetTimer()
 
 	def mistakeMade(self):
 		
 		print 'MISSED IT'
+		#viz.playSound(soundBank.buzzer)
+		viz.clearcolor(viz.RED)
+		vizact.ontimer2(self.updateRateSecs+0.2,0,viz.clearcolor,viz.BLACK)
+		
+		#self.textObj.color(viz.RED)
+		#vizact.ontimer2(self.updateRateSecs+0.2,0,self.textObj.color,viz.WHITE)
+		
 		import winsound
-		Freq = 500 # Set Frequency To 2500 Hertz
-		Dur = 100 # Set Duration To 1000 ms == 1 second
+		Freq = 200 # Set Frequency To 2500 Hertz
+		Dur = 150 # Set Duration To 1000 ms == 1 second
 		winsound.Beep(Freq,Dur)
 		
-		if(sendNetCommands):
-			receiver.send(action = appendTrialToEndOfBlock) # Passed through the e object as e.message
+#		if(sendNetCommands):
+#			receiver.send(action = appendTrialToEndOfBlock) # Passed through the e object as e.message
 		
 	def startTargetTimer(self):
 		self.targetTimer = vizact.ontimer2(self.updateRateSecs+0.2,0,self.mistakeMade)
 	
 	def stopTargetTimer(self):
-		print 'Stopped timer'
-		self.targetTimer.remove()
-		self.targetTimer = False
+		if ( self.targetTimer ):
+			print 'Stopped timer'
+			self.targetTimer.remove()
+			self.targetTimer = False
 		
 	def targetDetected(self):
 		
@@ -130,10 +142,14 @@ class numberCount(viz.EventClass):
 		else:
 			print 'BAD RESPONSE'
 			self.mistakeMade()
-			
+
+
+#viz.window.setFullscreen(2)
+viz.window.setFullscreenMonitor(1)
 viz.go(viz.FULLSCREEN)
 
 counter = numberCount()
+
 #counter.startCountDown()
 
 import vizact
@@ -145,26 +161,19 @@ vizact.onsensordown(wii1.wiimote,wii.BUTTON_B,counter.targetDetected)
 ###############################################################################################################################################################################
 ###############################################################################################################################################################################
 
-####################################
-## Setup receiver
+#myNet = viz.addNetwork('performVR')
 #
-#def onNetwork(e):
+#def onNetwork(packet):
 #	
 #	print 'Got it.'
-#	sender = 'performVR'.upper()
+#	sender = packet.sender
 #	
-#	print sender
-#	if e.sender.upper() == sender:
-#		e.action(e)
-#		
-#
-#def printMessage(e):
-#	print 'Message is: ' + e.message
-#
-## Receive data over port 5000
-#viz.net.addPort(5000)
+#	eval( packet.evalStatement )
 #	
 #viz.callback(viz.NETWORK_EVENT, onNetwork)
 #
-
-
+#def aFun(message):
+#	print 'Ran function!  Success!' + message
+#
+#def sendPacket():
+#	myNet.send(evalStatement = 'aFun(message=\"Plooey\")')
