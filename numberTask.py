@@ -115,8 +115,8 @@ class numberCount(viz.EventClass):
 		Dur = 150 # Set Duration To 1000 ms == 1 second
 		winsound.Beep(Freq,Dur)
 		
-#		if(sendNetCommands):
-#			receiver.send(action = appendTrialToEndOfBlock) # Passed through the e object as e.message
+		if( networkingInOn ):
+			netClient.send(message='numberTaskError')
 		
 	def startTargetTimer(self):
 		self.targetTimer = vizact.ontimer2(self.updateRateSecs+0.2,0,self.mistakeMade)
@@ -161,17 +161,22 @@ vizact.onsensordown(wii1.wiimote,wii.BUTTON_B,counter.targetDetected)
 ###############################################################################################################################################################################
 ###############################################################################################################################################################################
 
-#myNet = viz.addNetwork('performVR')
-#
-#def onNetwork(packet):
-#	
-#	print 'Got it.'
-#	sender = packet.sender
-#	
-#	eval( packet.evalStatement )
-#	
-#viz.callback(viz.NETWORK_EVENT, onNetwork)
-#
+networkingInOn = True;
+
+netClient = viz.addNetwork('performVR2')
+
+def onNetwork(packet):
+	
+	print 'Got it.'
+	sender = packet.sender
+	
+	if( packet.message == 'numberTaskError'  ):
+		print 'Number missed!'
+	
+viz.callback(viz.NETWORK_EVENT, onNetwork)
+
+
+
 #def aFun(message):
 #	print 'Ran function!  Success!' + message
 #
