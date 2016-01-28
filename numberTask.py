@@ -49,10 +49,15 @@ class numberCount(viz.EventClass):
 		self.textObj.alignment( viz.ALIGN_CENTER_CENTER) 
 		self.textObj.fontSize(1000)
 		
-		self.updateAction  = vizact.ontimer(self.updateRateSecs,self.presentNumber)
-		self.startPresentingNumbers()
-		
 		self.targetTimer = []
+		self.updateAction  = vizact.ontimer(self.updateRateSecs,self.presentNumber)
+		
+		self.stopPresentingNumbers()
+		#self.startPresentingNumbers()
+		
+		print 'Ready. To start countdown, run <numberCount>.startPresentingNumbers()' 
+		
+		
 		
 	def addInt(self):
 		''' Add a number to the right of the self.numberbuffer '''
@@ -84,7 +89,7 @@ class numberCount(viz.EventClass):
 		# Add a rand int to the left of nextBuffer
 		self.addInt()
 		
-		print self.nextBuffer
+		#print self.nextBuffer
 		
 		if ( self.textObj.getMessage() == str(self.targetNumber) ):
 			self.startTargetTimer()
@@ -92,13 +97,15 @@ class numberCount(viz.EventClass):
 	def startPresentingNumbers(self):
 		
 		if(self.updateAction):
-			self.updateAction.setEnabled(viz.enable)
+			self.updateAction.setEnabled(1)
 			
 	def stopPresentingNumbers(self):
 		
 		if(self.updateAction):
-			self.updateAction.setEnabled(viz.disable)
+			self.updateAction.setEnabled(0)
 			self.stopTargetTimer()
+			self.textObj.message('')
+			
 
 	def mistakeMade(self):
 		
@@ -115,7 +122,7 @@ class numberCount(viz.EventClass):
 		Dur = 150 # Set Duration To 1000 ms == 1 second
 		winsound.Beep(Freq,Dur)
 		
-		if( networkingInOn ):
+		if( networkingOn  ):
 			netClient.send(message='numberTaskError')
 		
 	def startTargetTimer(self):
@@ -150,8 +157,6 @@ viz.go(viz.FULLSCREEN)
 
 counter = numberCount()
 
-#counter.startCountDown()
-
 import vizact
 
 wii1 = wiiObj()
@@ -161,24 +166,20 @@ vizact.onsensordown(wii1.wiimote,wii.BUTTON_B,counter.targetDetected)
 ###############################################################################################################################################################################
 ###############################################################################################################################################################################
 
-networkingInOn = True;
+networkingOn = True;
 
-netClient = viz.addNetwork('performVR2')
+netClient = viz.addNetwork('performLabVR2')
 
 def onNetwork(packet):
 	
-	print 'Got it.'
-	sender = packet.sender
+	print 'Received network message: ' + packet.message
 	
-	if( packet.message == 'numberTaskError'  ):
-		print 'Number missed!'
+	if( packet.message == 'start'  ):
+		
+		counter.startPresentingNumbers()
 	
+	elif( packet.message == 'stop'  ): 
+
+		counter.stopPresentingNumbers()
+		
 viz.callback(viz.NETWORK_EVENT, onNetwork)
-
-
-
-#def aFun(message):
-#	print 'Ran function!  Success!' + message
-#
-#def sendPacket():
-#	myNet.send(evalStatement = 'aFun(message=\"Plooey\")')
