@@ -32,10 +32,10 @@ class numberCount(viz.EventClass):
 			
 
 		self.targetNumber = 3
-		self.maxNum = 5
+		self.maxNum = 7
 		
-		self.buffSize  = 10
-		self.updateRateSecs = 1
+		self.buffSize  = 7
+		self.updateRateSecs = 0.75
 		
 		self.nextBuffer  = np.array([])
 		self.lastBuffer = []
@@ -53,7 +53,6 @@ class numberCount(viz.EventClass):
 		self.updateAction  = vizact.ontimer(self.updateRateSecs,self.presentNumber)
 		
 		self.stopPresentingNumbers()
-		#self.startPresentingNumbers()
 		
 		print 'Ready. To start countdown, run <numberCount>.startPresentingNumbers()' 
 		
@@ -106,27 +105,48 @@ class numberCount(viz.EventClass):
 			self.stopTargetTimer()
 			self.textObj.message('')
 			
-
-	def mistakeMade(self):
+	def failedToDetect(self):
 		
-		print 'MISSED IT'
-		#viz.playSound(soundBank.buzzer)
+		print 'Failed to detect'
+		
 		viz.clearcolor(viz.RED)
-		vizact.ontimer2(self.updateRateSecs+0.2,0,viz.clearcolor,viz.BLACK)
-		
-		#self.textObj.color(viz.RED)
-		#vizact.ontimer2(self.updateRateSecs+0.2,0,self.textObj.color,viz.WHITE)
+		# Temporarily stop presenting numbers
+		self.stopPresentingNumbers()
+		vizact.ontimer2(self.updateRateSecs,0,viz.clearcolor,viz.BLACK)
+		vizact.ontimer2(self.updateRateSecs,0,self.startPresentingNumbers)
 		
 		import winsound
 		Freq = 200 # Set Frequency To 2500 Hertz
 		Dur = 150 # Set Duration To 1000 ms == 1 second
+
+		winsound.Beep(Freq,Dur)
+		
+		if( networkingOn  ):
+			netClient.send(message='numberTaskError')
+			
+	def falseAlarm(self):
+		
+		print 'False alarm'
+	
+		#vizact.ontimer2(self.updateRateSecs,0,viz.clarcolor,viz.RED)
+		
+		viz.clearcolor(viz.RED)
+		# Temporarily stop presenting numbers
+		self.stopPresentingNumbers()
+		vizact.ontimer2(self.updateRateSecs,0,viz.clearcolor,viz.BLACK)
+		vizact.ontimer2(self.updateRateSecs,0,self.startPresentingNumbers)
+		
+		import winsound
+		Freq = 200 # Set Frequency To 2500 Hertz
+		Dur = 150 # Set Duration To 1000 ms == 1 second
+
 		winsound.Beep(Freq,Dur)
 		
 		if( networkingOn  ):
 			netClient.send(message='numberTaskError')
 		
 	def startTargetTimer(self):
-		self.targetTimer = vizact.ontimer2(self.updateRateSecs+0.2,0,self.mistakeMade)
+		self.targetTimer = vizact.ontimer2(self.updateRateSecs,0,self.failedToDetect)
 	
 	def stopTargetTimer(self):
 		if ( self.targetTimer ):
@@ -142,17 +162,16 @@ class numberCount(viz.EventClass):
 			print 'GOT IT'
 			self.stopTargetTimer()
 			import winsound
-			Freq = 200 # Set Frequency To 2500 Hertz
+			Freq = 300 # Set Frequency To 2500 Hertz
 			Dur = 50 # Set Duration To 1000 ms == 1 second
 			winsound.Beep(Freq,Dur)
 			
 		else:
 			print 'BAD RESPONSE'
-			self.mistakeMade()
+			self.falseAlarm()
 
 
-#viz.window.setFullscreen(2)
-viz.window.setFullscreenMonitor(1)
+viz.window.setFullscreenMonitor(2)
 viz.go(viz.FULLSCREEN)
 
 counter = numberCount()
@@ -168,7 +187,10 @@ vizact.onsensordown(wii1.wiimote,wii.BUTTON_B,counter.targetDetected)
 
 networkingOn = True;
 
-netClient = viz.addNetwork('performLabVR2')
+if networkingOn :
+	netClient = viz.addNetwork('performLabVR2')
+else:
+	counter.startPresentingNumbers()
 
 def onNetwork(packet):
 	
@@ -183,3 +205,4 @@ def onNetwork(packet):
 		counter.stopPresentingNumbers()
 		
 viz.callback(viz.NETWORK_EVENT, onNetwork)
+
